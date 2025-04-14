@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Herramienta para migrar playlists de Spotify a YouTube Music
-Con soporte para autenticación OAuth2
+Tool to migrate playlists from Spotify to YouTube Music
+With support for OAuth2 authentication
 """
 import os
 import json
@@ -10,7 +10,7 @@ from typing import List, Dict, Any
 from pathlib import Path
 import dotenv
 
-# Cargar variables de entorno desde .env
+# Load environment variables from .env
 dotenv.load_dotenv()
 
 import spotipy
@@ -23,23 +23,23 @@ class SpotifyToYTMusicMigrator:
         self.ytmusic = None
         
     def setup_spotify(self, client_id=None, client_secret=None, redirect_uri=None):
-        """Configura la autenticación con Spotify usando credenciales de .env o proporcionadas"""
-        print("Configurando la conexión con Spotify...")
+        """Configure Spotify authentication using credentials from .env or provided directly"""
+        print("Setting up connection with Spotify...")
         
-        # Usar credenciales de .env si no se proporcionaron
+        # Use credentials from .env if not provided
         client_id = client_id or os.getenv("SPOTIFY_CLIENT_ID")
         client_secret = client_secret or os.getenv("SPOTIFY_CLIENT_SECRET")
         redirect_uri = redirect_uri or os.getenv("SPOTIFY_REDIRECT_URI", "http://localhost:8888/callback")
         
-        # Verificar que tenemos las credenciales necesarias
+        # Verify that we have the necessary credentials
         if not client_id or not client_secret:
-            print("No se encontraron credenciales de Spotify. Por favor, proporciónalas manualmente.")
-            client_id = client_id or input("\nIngresa tu Spotify Client ID: ")
-            client_secret = client_secret or input("Ingresa tu Spotify Client Secret: ")
-            redirect_uri = redirect_uri or input("Ingresa tu Redirect URI (predeterminada: http://localhost:8888/callback): ") or "http://localhost:8888/callback"
+            print("No Spotify credentials found. Please provide them manually.")
+            client_id = client_id or input("\nEnter your Spotify Client ID: ")
+            client_secret = client_secret or input("Enter your Spotify Client Secret: ")
+            redirect_uri = redirect_uri or input("Enter your Redirect URI (default: http://localhost:8888/callback): ") or "http://localhost:8888/callback"
             
-            # Preguntar si desea guardar las credenciales
-            if input("\n¿Deseas guardar estas credenciales para usos futuros? (s/n): ").lower() == 's':
+            # Ask if user wants to save the credentials
+            if input("\nDo you want to save these credentials for future use? (y/n): ").lower() == 'y':
                 self.save_credentials_to_env(
                     spotify_client_id=client_id,
                     spotify_client_secret=client_secret,
@@ -54,60 +54,60 @@ class SpotifyToYTMusicMigrator:
             redirect_uri=redirect_uri,
             scope=scope
         ))
-        print("Conexión con Spotify establecida.")
+        print("Connection with Spotify established.")
         
     def setup_ytmusic(self):
-        """Configura la autenticación con YouTube Music"""
-        print("\nConfigurando la conexión con YouTube Music...")
+        """Configure authentication with YouTube Music"""
+        print("\nSetting up connection with YouTube Music...")
         
-        # Verificar si existe el archivo oauth.json
+        # Check if oauth.json file exists
         oauth_file = "oauth.json"
         if os.path.exists(oauth_file):
             try:
-                # Intentar usar el archivo oauth.json
-                print("Encontrado archivo oauth.json, verificando formato...")
+                # Try to use the oauth.json file
+                print("Found oauth.json file, verifying format...")
                 
-                # Leer archivo para verificar su formato
+                # Read file to verify its format
                 with open(oauth_file, 'r') as f:
                     oauth_data = json.load(f)
                 
-                # Verificar si es un archivo de OAuth2 con tokens
+                # Check if it's an OAuth2 file with tokens
                 if 'access_token' in oauth_data and 'refresh_token' in oauth_data:
-                    print("Detectado formato OAuth2 con tokens.")
+                    print("Detected OAuth2 format with tokens.")
                     
-                    # Crear un archivo de formato compatible con ytmusicapi
+                    # Create a file in a format compatible with ytmusicapi
                     headers_file = "ytmusic_headers.json"
                     self.create_ytmusic_headers_from_oauth(oauth_data, headers_file)
                     
-                    # Usar el archivo creado
+                    # Use the created file
                     self.ytmusic = YTMusic(headers_file)
-                    print(f"✅ Conexión establecida usando credenciales de {oauth_file}")
+                    print(f"✅ Connection established using credentials from {oauth_file}")
                 else:
-                    # Si no tiene tokens, intentar usarlo directamente
+                    # If it doesn't have tokens, try to use it directly
                     self.ytmusic = YTMusic(oauth_file)
-                    print(f"✅ Conexión establecida usando {oauth_file}")
+                    print(f"✅ Connection established using {oauth_file}")
                 return
             except Exception as e:
-                print(f"Error al cargar {oauth_file}: {e}")
-                print("Intentando métodos alternativos...")
+                print(f"Error loading {oauth_file}: {e}")
+                print("Trying alternative methods...")
         
-        # Intentar con otros archivos de autenticación
+        # Try with other authentication files
         auth_files = ["ytmusic_headers.json", "headers_auth.json", "browser_headers.json"]
         for file in auth_files:
             if os.path.exists(file):
                 try:
                     self.ytmusic = YTMusic(file)
-                    print(f"✅ Conexión establecida usando el archivo {file}")
+                    print(f"✅ Connection established using the file {file}")
                     return
                 except Exception as e:
-                    print(f"Error al cargar {file}: {e}")
+                    print(f"Error loading {file}: {e}")
         
-        print("❌ No se encontró ningún archivo de autenticación válido.")
-        print("Asegúrate de tener un archivo oauth.json válido en la misma carpeta que este script.")
-        raise ValueError("No se pudo establecer conexión con YouTube Music.")
+        print("❌ No valid authentication file found.")
+        print("Make sure you have a valid oauth.json file in the same folder as this script.")
+        raise ValueError("Could not establish connection with YouTube Music.")
     
     def create_ytmusic_headers_from_oauth(self, oauth_data, output_file):
-        """Crea un archivo de headers compatible con ytmusicapi a partir de datos OAuth2"""
+        """Create a headers file compatible with ytmusicapi from OAuth2 data"""
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
             "Accept": "*/*",
@@ -121,41 +121,41 @@ class SpotifyToYTMusicMigrator:
         with open(output_file, 'w') as f:
             json.dump(headers, f, indent=2)
         
-        print(f"Creado archivo {output_file} a partir de tokens OAuth2")
+        print(f"Created {output_file} file from OAuth2 tokens")
     
     def save_credentials_to_env(self, **credentials):
-        """Guarda las credenciales en el archivo .env"""
+        """Save credentials to the .env file"""
         env_path = Path('.env')
         
-        # Leer el archivo .env existente si existe
+        # Read the existing .env file if it exists
         env_content = ""
         if env_path.exists():
             with open(env_path, 'r') as f:
                 env_content = f.read()
         
-        # Actualizar variables existentes o añadir nuevas
+        # Update existing variables or add new ones
         for key, value in credentials.items():
             key = key.upper()
             if f"{key}=" in env_content:
-                # Reemplazar la variable existente
+                # Replace the existing variable
                 lines = env_content.split('\n')
                 for i, line in enumerate(lines):
                     if line.startswith(f"{key}="):
                         lines[i] = f"{key}={value}"
                 env_content = '\n'.join(lines)
             else:
-                # Añadir nueva variable
+                # Add new variable
                 env_content += f"\n{key}={value}"
         
-        # Guardar el archivo .env
+        # Save the .env file
         with open(env_path, 'w') as f:
             f.write(env_content.strip())
         
-        print(f"Credenciales guardadas en el archivo .env")
+        print(f"Credentials saved in the .env file")
     
     def get_spotify_playlists(self) -> List[Dict[str, Any]]:
-        """Obtiene todas las playlists del usuario en Spotify"""
-        print("\nObteniendo tus playlists de Spotify...")
+        """Get all user playlists from Spotify"""
+        print("\nGetting your Spotify playlists...")
         
         results = self.spotify.current_user_playlists()
         playlists = results['items']
@@ -164,11 +164,11 @@ class SpotifyToYTMusicMigrator:
             results = self.spotify.next(results)
             playlists.extend(results['items'])
         
-        print(f"Se encontraron {len(playlists)} playlists.")
+        print(f"Found {len(playlists)} playlists.")
         return playlists
     
     def get_playlist_tracks(self, playlist_id: str) -> List[Dict[str, Any]]:
-        """Obtiene todas las canciones de una playlist de Spotify"""
+        """Get all songs from a Spotify playlist"""
         results = self.spotify.playlist_items(playlist_id)
         tracks = results['items']
         
@@ -179,10 +179,10 @@ class SpotifyToYTMusicMigrator:
         return tracks
     
     def search_on_ytmusic(self, track: Dict[str, Any]) -> str:
-        """Busca una canción de Spotify en YouTube Music y devuelve el ID"""
+        """Search for a Spotify song on YouTube Music and return the ID"""
         track_name = track['track']['name']
         artists = [artist['name'] for artist in track['track']['artists']]
-        artist_name = artists[0]  # Usar el primer artista para la búsqueda
+        artist_name = artists[0]  # Use the first artist for search
         
         query = f"{track_name} {artist_name}"
         
@@ -192,60 +192,60 @@ class SpotifyToYTMusicMigrator:
                 return search_results[0]['videoId']
             return None
         except Exception as e:
-            print(f"Error al buscar '{query}': {e}")
+            print(f"Error searching for '{query}': {e}")
             return None
     
     def create_ytmusic_playlist(self, playlist_name: str, description: str) -> str:
-        """Crea una playlist en YouTube Music y devuelve su ID"""
+        """Create a playlist on YouTube Music and return its ID"""
         try:
             playlist_id = self.ytmusic.create_playlist(
                 title=playlist_name,
                 description=description,
-                privacy_status="PRIVATE"  # Por defecto crear playlists privadas
+                privacy_status="PRIVATE"  # Create playlists as private by default
             )
             return playlist_id
         except Exception as e:
-            print(f"Error al crear la playlist '{playlist_name}': {e}")
+            print(f"Error creating playlist '{playlist_name}': {e}")
             return None
     
     def add_tracks_to_playlist(self, playlist_id: str, video_ids: List[str]):
-        """Añade canciones a una playlist de YouTube Music"""
+        """Add songs to a YouTube Music playlist"""
         try:
             status = self.ytmusic.add_playlist_items(playlist_id, video_ids)
             return status
         except Exception as e:
-            print(f"Error al añadir canciones a la playlist: {e}")
+            print(f"Error adding songs to playlist: {e}")
             return None
     
     def migrate_playlist(self, playlist):
-        """Migra una playlist completa de Spotify a YouTube Music"""
+        """Migrate a complete playlist from Spotify to YouTube Music"""
         playlist_name = playlist['name']
         playlist_id = playlist['id']
-        description = f"Migrado desde Spotify"
+        description = f"Migrated from Spotify"
         if 'description' in playlist and playlist['description']:
             description += f": {playlist['description']}"
         
-        print(f"\nMigrando playlist: {playlist_name}")
+        print(f"\nMigrating playlist: {playlist_name}")
         
-        # Obtener canciones de la playlist de Spotify
+        # Get songs from Spotify playlist
         tracks = self.get_playlist_tracks(playlist_id)
-        print(f"  - Encontradas {len(tracks)} canciones en Spotify")
+        print(f"  - Found {len(tracks)} songs on Spotify")
         
-        # Crear la playlist en YouTube Music
+        # Create playlist on YouTube Music
         ytmusic_playlist_id = self.create_ytmusic_playlist(playlist_name, description)
         if not ytmusic_playlist_id:
-            print(f"  ❌ No se pudo crear la playlist en YouTube Music. Saltando.")
+            print(f"  ❌ Could not create playlist on YouTube Music. Skipping.")
             return None
         
-        # Buscar cada canción en YouTube Music
+        # Search for each song on YouTube Music
         video_ids = []
         not_found = 0
         
         for i, track in enumerate(tracks):
-            if not track['track']:  # Algunas pistas pueden ser None o no tener la clave 'track'
+            if not track['track']:  # Some tracks might be None or not have the 'track' key
                 continue
                 
-            print(f"  - Procesando [{i+1}/{len(tracks)}]: {track['track']['name']} - {track['track']['artists'][0]['name']}", end="")
+            print(f"  - Processing [{i+1}/{len(tracks)}]: {track['track']['name']} - {track['track']['artists'][0]['name']}", end="")
             
             video_id = self.search_on_ytmusic(track)
             if video_id:
@@ -255,33 +255,33 @@ class SpotifyToYTMusicMigrator:
                 not_found += 1
                 print(" ❌")
             
-            # Añadir canciones por lotes de 50 (límite de la API) o al final
+            # Add songs in batches of 50 (API limit) or at the end
             if len(video_ids) == 50 or i == len(tracks) - 1:
                 if video_ids:
                     status = self.add_tracks_to_playlist(ytmusic_playlist_id, video_ids)
                     if status:
-                        print(f"  - Añadidas {len(video_ids)} canciones a YouTube Music")
-                    video_ids = []  # Reiniciar la lista para el siguiente lote
+                        print(f"  - Added {len(video_ids)} songs to YouTube Music")
+                    video_ids = []  # Reset the list for the next batch
             
-            # Pequeña pausa para no sobrecargar las APIs
+            # Small pause to avoid overloading the APIs
             time.sleep(0.5)
         
-        print(f"  ✅ Playlist migrada: {playlist_name}")
-        print(f"  - Canciones encontradas: {len(tracks) - not_found} de {len(tracks)}")
+        print(f"  ✅ Playlist migrated: {playlist_name}")
+        print(f"  - Songs found: {len(tracks) - not_found} out of {len(tracks)}")
         
         return ytmusic_playlist_id
     
     def migrate_all_playlists(self):
-        """Migra todas las playlists del usuario"""
+        """Migrate all user playlists"""
         playlists = self.get_spotify_playlists()
         
-        # Mostrar playlists disponibles
-        print("\nPlaylists disponibles:")
+        # Show available playlists
+        print("\nAvailable playlists:")
         for i, playlist in enumerate(playlists):
-            print(f"{i+1}. {playlist['name']} ({playlist['tracks']['total']} canciones)")
+            print(f"{i+1}. {playlist['name']} ({playlist['tracks']['total']} songs)")
         
-        # Preguntar qué playlists migrar
-        selection = input("\n¿Qué playlists deseas migrar? (números separados por comas, 'all' para todas): ")
+        # Ask which playlists to migrate
+        selection = input("\nWhich playlists do you want to migrate? (numbers separated by commas, 'all' for all): ")
         
         selected_playlists = []
         if selection.lower() == 'all':
@@ -291,10 +291,10 @@ class SpotifyToYTMusicMigrator:
                 indices = [int(idx.strip()) - 1 for idx in selection.split(',')]
                 selected_playlists = [playlists[idx] for idx in indices if 0 <= idx < len(playlists)]
             except:
-                print("Selección inválida. Saliendo.")
+                print("Invalid selection. Exiting.")
                 return
         
-        # Migrar las playlists seleccionadas
+        # Migrate the selected playlists
         results = []
         for playlist in selected_playlists:
             ytmusic_playlist_id = self.migrate_playlist(playlist)
@@ -303,44 +303,44 @@ class SpotifyToYTMusicMigrator:
                 'ytmusic_id': ytmusic_playlist_id
             })
         
-        # Mostrar resumen
-        print("\n=== Resumen de migración ===")
-        print(f"Playlists migradas: {len([r for r in results if r['ytmusic_id']])}/{len(selected_playlists)}")
+        # Show summary
+        print("\n=== Migration Summary ===")
+        print(f"Playlists migrated: {len([r for r in results if r['ytmusic_id']])}/{len(selected_playlists)}")
         
         return results
 
 def main():
-    print("=== Migrador de Playlists de Spotify a YouTube Music ===")
-    print("Esta herramienta te ayudará a migrar tus playlists de Spotify a YouTube Music.")
+    print("=== Spotify to YouTube Music Playlist Migrator ===")
+    print("This tool will help you migrate your playlists from Spotify to YouTube Music.")
     
-    # Verificar si tenemos credenciales guardadas
+    # Check if we have saved credentials
     if os.getenv("SPOTIFY_CLIENT_ID") and os.getenv("SPOTIFY_CLIENT_SECRET"):
-        print("\nSe encontraron credenciales de Spotify guardadas en el archivo .env.")
+        print("\nSpotify credentials found in the .env file.")
     else:
-        print("\nRequisitos previos:")
-        print("1. Necesitas crear una aplicación en Spotify Developer Dashboard:")
+        print("\nPrerequisites:")
+        print("1. You need to create an application in the Spotify Developer Dashboard:")
         print("   https://developer.spotify.com/dashboard/applications")
-        print("2. Una vez creada la aplicación, obtendrás el Client ID y Client Secret")
-        print("3. En la configuración de la aplicación, añade como Redirect URI: http://localhost:8888/callback")
+        print("2. Once created, you will get the Client ID and Client Secret")
+        print("3. In the application settings, add http://localhost:8888/callback as a Redirect URI")
     
-    print("4. Asegúrate de tener un archivo oauth.json válido para YouTube Music")
+    print("4. Make sure you have a valid oauth.json file for YouTube Music")
     
     migrator = SpotifyToYTMusicMigrator()
     
     try:
-        # Configurar conexiones
+        # Set up connections
         migrator.setup_spotify()
         migrator.setup_ytmusic()
         
-        # Iniciar migración
+        # Start migration
         migrator.migrate_all_playlists()
         
-        print("\n¡Migración completada!")
-        print("Puedes acceder a tus playlists migradas en YouTube Music.")
+        print("\nMigration completed!")
+        print("You can access your migrated playlists on YouTube Music.")
         
     except Exception as e:
-        print(f"\nError durante la migración: {e}")
-        print("Por favor, verifica tus credenciales e intenta nuevamente.")
+        print(f"\nError during migration: {e}")
+        print("Please verify your credentials and try again.")
 
 if __name__ == "__main__":
     main()
