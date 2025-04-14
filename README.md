@@ -1,1 +1,181 @@
-# Spotify_Playlists_to_Youtube_Music
+# Spotify to YouTube Music Playlist Migrator
+
+A Python tool to easily migrate your playlists from Spotify to YouTube Music.
+
+## Overview
+
+This tool allows you to:
+- Connect to your Spotify account
+- List all your Spotify playlists
+- Select which playlists to migrate
+- Search for each song on YouTube Music
+- Create new playlists on YouTube Music
+- Migrate songs while preserving playlist names and descriptions
+
+## Requirements
+
+- Python 3.13 or higher
+- Spotify Developer Account
+- Google Cloud Project with YouTube Data API enabled
+
+## Installation
+
+### Using uv (recommended)
+
+```bash
+uv venv
+uv pip install -r requirements.txt
+```
+
+### Using pip
+
+```bash
+pip install -r requirements.txt
+```
+
+### Development installation
+
+```bash
+uv venv
+uv pip install -e .
+```
+
+## Configuration
+
+### 1. Spotify API Setup
+
+1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+2. Create a new application
+3. Obtain your **Client ID** and **Client Secret**
+4. Add `http://localhost:8888/callback` as a **Redirect URI** in the app settings
+5. Save these credentials for later use
+
+### 2. YouTube Music API Setup
+
+As of November 2024, YouTube Music requires OAuth authentication using the YouTube Data API:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **YouTube Data API v3**
+4. Go to **APIs & Services > OAuth consent screen**:
+   - Select "External" user type
+   - Fill in the required app information
+   - **IMPORTANT**: Add your YouTube Music account email as a test user
+   - You'll need to add any Google account that will use this tool as a test user
+5. Go to **APIs & Services > Credentials**:
+   - Click "Create Credentials"
+   - Select **OAuth client ID**
+   - Choose **TVs and Limited Input devices**
+   - Download the credentials file (optional, but good to have)
+
+6. Run the OAuth setup utility:
+   ```bash
+   ytmusicapi oauth
+   ```
+
+7. Follow the instructions:
+   - A URL and code will be displayed
+   - Open the URL in your browser
+   - Sign in with your Google account
+   - Enter the displayed code
+   - Confirm the requested permissions
+
+8. This will create an `oauth.json` file in the current directory with this format:
+   ```json
+   {
+    "scope": "https://www.googleapis.com/auth/youtube",
+    "token_type": "Bearer",
+    "access_token": "ya29.a0AZYkNZiK...",
+    "refresh_token": "1//03OJYQHLNGghG...",
+    "expires_at": 1744620393,
+    "expires_in": 3599
+   }
+   ```
+
+### 3. Environment File (Optional)
+
+Create a `.env` file in the project root to store your Spotify credentials:
+
+```
+SPOTIFY_CLIENT_ID=your_client_id_here
+SPOTIFY_CLIENT_SECRET=your_client_secret_here
+SPOTIFY_REDIRECT_URI=http://localhost:8888/callback
+```
+
+## Usage
+
+1. Make sure the `oauth.json` file is in the same directory as the script
+
+2. Run the migrator:
+   ```bash
+   python main.py
+   ```
+
+3. If you haven't set up the `.env` file, you'll be prompted to enter your Spotify credentials
+
+4. The script will:
+   - Connect to both Spotify and YouTube Music
+   - List all your Spotify playlists
+   - Ask which ones you want to migrate
+
+5. Enter playlist numbers separated by commas (e.g., "1,3,5") or "all" to migrate everything
+
+6. The migration process will begin:
+   - Each playlist will be created on YouTube Music
+   - Each song will be searched on YouTube Music
+   - Matching songs will be added to the new playlist
+   - A summary will be displayed at the end
+
+## Advanced Features
+
+### Token Refreshing
+
+OAuth tokens expire after approximately 1 hour. If you get authentication errors:
+
+1. Run `ytmusicapi oauth` again to generate a new token
+2. Replace the existing `oauth.json` file
+3. Delete the `ytmusic_headers.json` file if it exists
+4. Run the script again
+
+### Playlist Privacy
+
+By default, all migrated playlists are set to PRIVATE. You can modify this in the code if needed.
+
+## Troubleshooting
+
+### Spotify Authentication Issues
+
+- Verify your Client ID and Client Secret
+- Ensure your Redirect URI is configured correctly in the Spotify Developer Dashboard
+- Check if your `.env` file has the correct format
+
+### YouTube Music Authentication Errors
+
+- "invalid_grant" error: Your OAuth token has expired. Generate a new one with `ytmusicapi oauth`
+- Permission errors: Make sure your email is added as a test user in the OAuth consent screen
+- If you receive a 401 or 403 error, check that:
+  - The YouTube Data API is enabled in your Google Cloud project
+  - Your OAuth consent screen is properly configured
+
+### Migration Errors
+
+- Rate limiting: If you get API rate limit errors, the script will pause, but you might need to wait longer
+- Songs not found: Some songs may not be available on YouTube Music or might have different titles
+- Long playlists: YouTube Music has a limit of 5,000 songs per playlist
+
+## Dependencies
+
+- `spotipy`: Spotify API client
+- `ytmusicapi`: YouTube Music API client
+- `python-dotenv`: For loading environment variables
+- `requests`: For HTTP requests
+- `google-auth-oauthlib`: For OAuth authentication
+- `browser-cookie3`: For browser cookie extraction (optional)
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

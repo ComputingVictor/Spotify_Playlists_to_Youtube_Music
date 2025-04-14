@@ -1,0 +1,39 @@
+# Environment variables
+.env
+.env.*
+
+# JSON files (including OAuth tokens and credentials)
+*.json
+*.cache
+
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# uv specific
+.uv/
+
+# IDE settings
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
