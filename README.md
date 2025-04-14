@@ -2,6 +2,9 @@
 
 A Python tool to easily migrate your playlists from Spotify to YouTube Music.
 
+![image](https://github.com/user-attachments/assets/e161f8cc-8589-4c95-9049-b3d8d1a3fb54)
+
+
 ## Overview
 
 This tool allows you to:
