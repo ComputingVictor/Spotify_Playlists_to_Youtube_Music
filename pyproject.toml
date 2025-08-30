@@ -1,13 +1,50 @@
 [project]
 name = "spotify-playlists-to-youtube-music"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Python tool to migrate playlists from Spotify to YouTube Music with OAuth2 authentication support"
 readme = "README.md"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+keywords = ["spotify", "youtube-music", "playlist", "migration", "oauth2"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio",
+]
 requires-python = ">=3.13"
 dependencies = [
     "browser-cookie3>=0.20.1",
+    "google-api-python-client>=2.166.0",
+    "google-auth-oauthlib>=1.2.1", 
+    "google-auth-httplib2>=0.2.0",
+    "pillow>=10.2.0",
     "python-dotenv>=1.1.0",
     "requests>=2.32.3",
     "spotipy>=2.25.1",
     "ytmusicapi>=1.10.3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/spotify-playlists-to-youtube-music"
+Repository = "https://github.com/yourusername/spotify-playlists-to-youtube-music"
+Documentation = "https://github.com/yourusername/spotify-playlists-to-youtube-music#readme"
+"Bug Tracker" = "https://github.com/yourusername/spotify-playlists-to-youtube-music/issues"
+
+[project.scripts]
+spotify-to-ytmusic = "src.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"

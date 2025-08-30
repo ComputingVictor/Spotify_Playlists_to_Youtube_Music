@@ -188,19 +188,148 @@ By default, all migrated playlists are set to PRIVATE. You can modify this in th
 - Songs not found: Some songs may not be available on YouTube Music or might have different titles
 - Long playlists: YouTube Music has a limit of 5,000 songs per playlist
 
+## Performance and Limitations
+
+### API Rate Limits
+- **Spotify API**: Generally allows up to 100 requests per second
+- **YouTube Music API**: Has more restrictive rate limits (approximately 1-2 requests per second recommended)
+- The tool includes automatic delays (0.5s between requests) to respect rate limits
+
+### Known Limitations
+- YouTube Music playlists are limited to 5,000 songs maximum
+- Some songs may not be available on YouTube Music due to licensing
+- Song matching is based on title and artist name, which may not always be accurate
+- OAuth tokens expire after 1 hour and need to be refreshed
+
+### Performance Tips
+- For large playlists (>500 songs), expect migration to take 5-10 minutes per playlist
+- Close other applications using YouTube Music API during migration
+- If you encounter rate limit errors, wait a few minutes before retrying
+
+## Error Handling
+
+### Common Errors and Solutions
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `invalid_grant` | OAuth token expired | Run `ytmusicapi oauth` again |
+| `401 Unauthorized` | Invalid credentials | Check Spotify Client ID/Secret |
+| `403 Forbidden` | YouTube API not enabled | Enable YouTube Data API in Google Cloud Console |
+| `Rate limit exceeded` | Too many API requests | Wait 5-10 minutes and try again |
+| `Playlist creation failed` | YouTube Music API error | Check if you're signed into the correct Google account |
+
+### Debugging Mode
+
+To enable verbose logging, set the environment variable:
+```bash
+export SPOTIFY_YTMUSIC_DEBUG=1
+python src/main.py
+```
+
+## Security Considerations
+
+- **Never share your `oauth.json` file** - it contains your Google account tokens
+- **Keep your `.env` file private** - it contains your Spotify credentials
+- The tool only requests read access to Spotify and write access to YouTube Music
+- All playlist creation is done with PRIVATE visibility by default
+- No personal data is stored beyond the current session
+
+## API Documentation
+
+### Spotify Web API
+- Documentation: https://developer.spotify.com/documentation/web-api
+- Scopes used: `user-library-read`, `playlist-read-private`
+
+### YouTube Music API (via ytmusicapi)
+- Documentation: https://ytmusicapi.readthedocs.io/
+- Permissions: YouTube Data API v3 access
+
 ## Dependencies
 
-- `spotipy`: Spotify API client
-- `ytmusicapi`: YouTube Music API client
-- `python-dotenv`: For loading environment variables
-- `requests`: For HTTP requests
-- `google-auth-oauthlib`: For OAuth authentication
-- `browser-cookie3`: For browser cookie extraction (optional)
+### Core Dependencies
+- `spotipy>=2.25.1`: Spotify API client library
+- `ytmusicapi>=1.10.3`: YouTube Music API client library
+- `python-dotenv>=1.1.0`: Environment variable management
+- `requests>=2.32.3`: HTTP request library
+
+### Authentication Dependencies
+- `google-api-python-client>=2.166.0`: Google API client library
+- `google-auth-oauthlib>=1.2.1`: OAuth2 authentication for Google services
+- `google-auth-httplib2>=0.2.0`: HTTP transport for Google Auth
+
+### Optional Dependencies
+- `browser-cookie3>=0.20.1`: Browser cookie extraction (fallback authentication)
+- `Pillow>=10.2.0`: Image processing (for potential future features)
+
+## Changelog
+
+### v0.1.0 (Current)
+- Initial release
+- Basic playlist migration functionality
+- OAuth2 authentication support for YouTube Music
+- Support for Spotify API authentication via Client ID/Secret
+- Batch processing of songs (50 songs per API call)
+- Private playlist creation by default
+
+## Roadmap
+
+### Planned Features
+- [ ] Resume interrupted migrations
+- [ ] Duplicate playlist detection
+- [ ] Advanced song matching algorithms
+- [ ] Support for collaborative playlists
+- [ ] GUI interface
+- [ ] Playlist synchronization (keep playlists in sync)
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Here's how you can help:
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests if applicable
+5. Ensure code follows the existing style
+6. Commit your changes (`git commit -m 'Add amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Development Setup
+```bash
+# Clone your fork
+git clone https://github.com/yourusername/spotify-playlists-to-youtube-music.git
+cd spotify-playlists-to-youtube-music
+
+# Create virtual environment
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+uv pip install -e .
+```
+
+### Code Style Guidelines
+- Follow PEP 8 for Python code style
+- Use type hints for function parameters and return values
+- Add docstrings for all public functions and classes
+- Keep functions focused and under 50 lines when possible
+
+### Bug Reports
+Please include:
+- Python version
+- Operating system
+- Complete error message
+- Steps to reproduce
+- Expected vs actual behavior
+
+### Feature Requests
+Please describe:
+- The problem you're trying to solve
+- Your proposed solution
+- Any alternative solutions considered
+- How this would benefit other users

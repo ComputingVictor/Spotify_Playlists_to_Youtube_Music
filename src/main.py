@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-Tool to migrate playlists from Spotify to YouTube Music
-With support for OAuth2 authentication
+Spotify to YouTube Music Playlist Migrator
+
+A comprehensive tool for migrating playlists from Spotify to YouTube Music
+with OAuth2 authentication support for both services.
+
+Author: Your Name
+License: MIT
+Version: 0.1.0
 """
 import os
 import json
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
 import dotenv
 
@@ -18,12 +24,37 @@ from spotipy.oauth2 import SpotifyOAuth
 from ytmusicapi import YTMusic
 
 class SpotifyToYTMusicMigrator:
-    def __init__(self):
-        self.spotify = None
-        self.ytmusic = None
+    """
+    Main class for migrating playlists from Spotify to YouTube Music.
+    
+    This class handles the authentication to both services and provides
+    methods to migrate playlists while preserving metadata and handling
+    API rate limits appropriately.
+    
+    Attributes:
+        spotify (spotipy.Spotify): Authenticated Spotify client instance
+        ytmusic (YTMusic): Authenticated YouTube Music client instance
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the migrator with empty client instances."""
+        self.spotify: Optional[spotipy.Spotify] = None
+        self.ytmusic: Optional[YTMusic] = None
         
-    def setup_spotify(self, client_id=None, client_secret=None, redirect_uri=None):
-        """Configure Spotify authentication using credentials from .env or provided directly"""
+    def setup_spotify(self, client_id: Optional[str] = None, 
+                     client_secret: Optional[str] = None, 
+                     redirect_uri: Optional[str] = None) -> None:
+        """
+        Configure Spotify authentication using credentials from .env or provided directly.
+        
+        Args:
+            client_id: Spotify application client ID
+            client_secret: Spotify application client secret  
+            redirect_uri: OAuth redirect URI (defaults to localhost:8888/callback)
+            
+        Raises:
+            ValueError: If authentication fails or credentials are invalid
+        """
         print("Setting up connection with Spotify...")
         
         # Use credentials from .env if not provided
@@ -56,8 +87,18 @@ class SpotifyToYTMusicMigrator:
         ))
         print("Connection with Spotify established.")
         
-    def setup_ytmusic(self):
-        """Configure authentication with YouTube Music"""
+    def setup_ytmusic(self) -> None:
+        """
+        Configure authentication with YouTube Music using OAuth2 tokens.
+        
+        This method attempts to authenticate using various methods in order:
+        1. oauth.json file with OAuth2 tokens
+        2. ytmusic_headers.json file with HTTP headers
+        3. Other authentication files
+        
+        Raises:
+            ValueError: If no valid authentication file is found
+        """
         print("\nSetting up connection with YouTube Music...")
         
         # Check if oauth.json file exists
@@ -106,8 +147,15 @@ class SpotifyToYTMusicMigrator:
         print("Make sure you have a valid oauth.json file in the same folder as this script.")
         raise ValueError("Could not establish connection with YouTube Music.")
     
-    def create_ytmusic_headers_from_oauth(self, oauth_data, output_file):
-        """Create a headers file compatible with ytmusicapi from OAuth2 data"""
+    def create_ytmusic_headers_from_oauth(self, oauth_data: Dict[str, Any], 
+                                         output_file: str) -> None:
+        """
+        Create a headers file compatible with ytmusicapi from OAuth2 data.
+        
+        Args:
+            oauth_data: Dictionary containing OAuth2 tokens and metadata
+            output_file: Path where the headers file should be created
+        """
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
             "Accept": "*/*",
@@ -123,8 +171,13 @@ class SpotifyToYTMusicMigrator:
         
         print(f"Created {output_file} file from OAuth2 tokens")
     
-    def save_credentials_to_env(self, **credentials):
-        """Save credentials to the .env file"""
+    def save_credentials_to_env(self, **credentials: str) -> None:
+        """
+        Save credentials to the .env file for future use.
+        
+        Args:
+            **credentials: Key-value pairs of credentials to save
+        """
         env_path = Path('.env')
         
         # Read the existing .env file if it exists
@@ -154,7 +207,16 @@ class SpotifyToYTMusicMigrator:
         print(f"Credentials saved in the .env file")
     
     def get_spotify_playlists(self) -> List[Dict[str, Any]]:
-        """Get all user playlists from Spotify"""
+        """
+        Get all user playlists from Spotify.
+        
+        Returns:
+            List of playlist dictionaries containing metadata like name, 
+            ID, description, and track count
+            
+        Raises:
+            spotipy.SpotifyException: If API call fails
+        """
         print("\nGetting your Spotify playlists...")
         
         results = self.spotify.current_user_playlists()
@@ -168,7 +230,18 @@ class SpotifyToYTMusicMigrator:
         return playlists
     
     def get_playlist_tracks(self, playlist_id: str) -> List[Dict[str, Any]]:
-        """Get all songs from a Spotify playlist"""
+        """
+        Get all songs from a Spotify playlist.
+        
+        Args:
+            playlist_id: Spotify playlist ID
+            
+        Returns:
+            List of track dictionaries containing song metadata
+            
+        Raises:
+            spotipy.SpotifyException: If playlist doesn't exist or API call fails
+        """
         results = self.spotify.playlist_items(playlist_id)
         tracks = results['items']
         
@@ -178,8 +251,19 @@ class SpotifyToYTMusicMigrator:
         
         return tracks
     
-    def search_on_ytmusic(self, track: Dict[str, Any]) -> str:
-        """Search for a Spotify song on YouTube Music and return the ID"""
+    def search_on_ytmusic(self, track: Dict[str, Any]) -> Optional[str]:
+        """
+        Search for a Spotify song on YouTube Music and return the video ID.
+        
+        Args:
+            track: Spotify track dictionary containing name and artist information
+            
+        Returns:
+            YouTube Music video ID if found, None otherwise
+            
+        Raises:
+            Exception: If YouTube Music API search fails
+        """
         track_name = track['track']['name']
         artists = [artist['name'] for artist in track['track']['artists']]
         artist_name = artists[0]  # Use the first artist for search
@@ -195,8 +279,20 @@ class SpotifyToYTMusicMigrator:
             print(f"Error searching for '{query}': {e}")
             return None
     
-    def create_ytmusic_playlist(self, playlist_name: str, description: str) -> str:
-        """Create a playlist on YouTube Music and return its ID"""
+    def create_ytmusic_playlist(self, playlist_name: str, description: str) -> Optional[str]:
+        """
+        Create a playlist on YouTube Music and return its ID.
+        
+        Args:
+            playlist_name: Name for the new playlist
+            description: Description for the new playlist
+            
+        Returns:
+            YouTube Music playlist ID if successful, None otherwise
+            
+        Raises:
+            Exception: If playlist creation fails
+        """
         try:
             playlist_id = self.ytmusic.create_playlist(
                 title=playlist_name,
@@ -208,8 +304,20 @@ class SpotifyToYTMusicMigrator:
             print(f"Error creating playlist '{playlist_name}': {e}")
             return None
     
-    def add_tracks_to_playlist(self, playlist_id: str, video_ids: List[str]):
-        """Add songs to a YouTube Music playlist"""
+    def add_tracks_to_playlist(self, playlist_id: str, video_ids: List[str]) -> Optional[Dict[str, Any]]:
+        """
+        Add songs to a YouTube Music playlist.
+        
+        Args:
+            playlist_id: YouTube Music playlist ID
+            video_ids: List of YouTube Music video IDs to add
+            
+        Returns:
+            API response status if successful, None otherwise
+            
+        Raises:
+            Exception: If adding tracks fails
+        """
         try:
             status = self.ytmusic.add_playlist_items(playlist_id, video_ids)
             return status
@@ -217,8 +325,25 @@ class SpotifyToYTMusicMigrator:
             print(f"Error adding songs to playlist: {e}")
             return None
     
-    def migrate_playlist(self, playlist):
-        """Migrate a complete playlist from Spotify to YouTube Music"""
+    def migrate_playlist(self, playlist: Dict[str, Any]) -> Optional[str]:
+        """
+        Migrate a complete playlist from Spotify to YouTube Music.
+        
+        This method handles the entire migration process:
+        1. Creates a new playlist on YouTube Music
+        2. Searches for each song on YouTube Music
+        3. Adds found songs to the new playlist
+        4. Provides progress updates and statistics
+        
+        Args:
+            playlist: Spotify playlist dictionary containing metadata
+            
+        Returns:
+            YouTube Music playlist ID if successful, None otherwise
+            
+        Raises:
+            Exception: If migration fails at any step
+        """
         playlist_name = playlist['name']
         playlist_id = playlist['id']
         description = f"Migrated from Spotify"
@@ -271,8 +396,19 @@ class SpotifyToYTMusicMigrator:
         
         return ytmusic_playlist_id
     
-    def migrate_all_playlists(self):
-        """Migrate all user playlists"""
+    def migrate_all_playlists(self) -> List[Dict[str, Union[str, Optional[str]]]]:
+        """
+        Migrate all user playlists with interactive selection.
+        
+        Displays all available playlists and allows the user to select
+        which ones to migrate. Provides detailed progress and summary.
+        
+        Returns:
+            List of migration results containing playlist names and IDs
+            
+        Raises:
+            Exception: If playlist retrieval or migration fails
+        """
         playlists = self.get_spotify_playlists()
         
         # Show available playlists
@@ -309,7 +445,19 @@ class SpotifyToYTMusicMigrator:
         
         return results
 
-def main():
+def main() -> None:
+    """
+    Main entry point for the Spotify to YouTube Music migration tool.
+    
+    This function orchestrates the entire migration process:
+    1. Checks for existing credentials
+    2. Sets up authentication for both services
+    3. Initiates the playlist migration process
+    4. Handles errors and provides user feedback
+    
+    Raises:
+        Exception: If authentication or migration fails
+    """
     print("=== Spotify to YouTube Music Playlist Migrator ===")
     print("This tool will help you migrate your playlists from Spotify to YouTube Music.")
     
