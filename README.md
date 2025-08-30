@@ -1,6 +1,12 @@
 # Spotify to YouTube Music Playlist Migrator
 
-A Python tool to easily migrate your playlists from Spotify to YouTube Music.
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub issues](https://img.shields.io/github/issues/ComputingVictor/Spotify_Playlists_to_Youtube_Music)](https://github.com/ComputingVictor/Spotify_Playlists_to_Youtube_Music/issues)
+[![GitHub stars](https://img.shields.io/github/stars/ComputingVictor/Spotify_Playlists_to_Youtube_Music)](https://github.com/ComputingVictor/Spotify_Playlists_to_Youtube_Music/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/ComputingVictor/Spotify_Playlists_to_Youtube_Music)](https://github.com/ComputingVictor/Spotify_Playlists_to_Youtube_Music/network)
+
+A comprehensive Python tool to easily migrate your playlists from Spotify to YouTube Music with OAuth2 authentication.
 
 ![image](https://github.com/user-attachments/assets/e161f8cc-8589-4c95-9049-b3d8d1a3fb54)
 
@@ -270,16 +276,6 @@ python src/main.py
 - Support for Spotify API authentication via Client ID/Secret
 - Batch processing of songs (50 songs per API call)
 - Private playlist creation by default
-
-## Roadmap
-
-### Planned Features
-- [ ] Resume interrupted migrations
-- [ ] Duplicate playlist detection
-- [ ] Advanced song matching algorithms
-- [ ] Support for collaborative playlists
-- [ ] GUI interface
-- [ ] Playlist synchronization (keep playlists in sync)
 
 ## License
 
